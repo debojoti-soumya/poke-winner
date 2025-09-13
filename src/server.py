@@ -49,22 +49,16 @@ import logging
 import json
 import os
 
-# Suppress the default Flask startup messages
-log = logging.getLogger('werkzeug')
-log.setLevel(logging.ERROR)
-
-app = Flask(__name__)
-
 history = []
 read = set()
 
-@app.route('/', methods=['GET'])
+@mcp.tool('/', methods=['GET'])
 def health_check():
     """Health check endpoint"""
     print("status ok");
     return jsonify({"status": "healthy", "message": "Server is running"})
 
-@app.route('/receive_history', methods=['POST'])
+@mcp.tool('/receive_history', methods=['POST'])
 def receive_history():
     print("=== RECEIVE_HISTORY ENDPOINT CALLED ===")
     print(f"Request method: {request.method}")
@@ -124,7 +118,7 @@ def receive_history():
         "total_stored": len(history)
     })
 
-@app.route('/get_history', methods=['GET'])
+@mcp.tool('/get_history', methods=['GET'])
 def get_history():
     """Endpoint to retrieve all stored history data"""
     print("=== GET_HISTORY ENDPOINT CALLED ===")
@@ -137,7 +131,7 @@ def get_history():
         "data": history
     })
 
-@app.route('/get_history_file', methods=['GET'])
+@mcp.tool('/get_history_file', methods=['GET'])
 def get_history_file():
     """Endpoint to retrieve history data from file"""
     print("=== GET_HISTORY_FILE ENDPOINT CALLED ===")
@@ -170,11 +164,8 @@ if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     host = "0.0.0.0"
     
-    print(f"Starting Flask server with MCP endpoints on {host}:{port}")
-    print(f"Flask endpoint: http://{host}:{port}/receive_history")
     print(f"MCP endpoint: http://{host}:{port}/mcp")
     
-    app.run(host=host, port=port, debug=False)
     mcp.run(
         transport="http",
         host=host,
