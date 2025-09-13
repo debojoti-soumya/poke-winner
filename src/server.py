@@ -58,6 +58,11 @@ app = Flask(__name__)
 history = []
 read = set()
 
+@app.route('/', methods=['GET'])
+def health_check():
+    """Health check endpoint"""
+    return jsonify({"status": "healthy", "message": "Server is running"})
+
 @app.route('/receive_history', methods=['POST'])
 def receive_history():
 
