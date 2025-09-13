@@ -82,42 +82,8 @@ def receive_history():
     history_data = request.get_json()
     print(f"Received history data: {len(history_data) if history_data else 0} items")
 
-
-    #print("\n--- Received Browser History ---")
-
-    with open('history.txt', 'a') as f:
-        if history_data:
-            for item in history_data:
-                # You can now process each history item as needed for your MCP automation.
-                # For this example, we'll just print the URL and title.
-                url = item.get('url', 'N/A')
-                title = item.get('title', 'N/A')
-                id = item.get('id', 'N/A')
-                lastVisitTime = item.get('lastVisitTime', 'N/A')
-                typedCount = item.get('typedCount', 'N/A')
-                visitCount = item.get('visitCount', 'N/A')
-
-                if id not in read:
-                    read.add(id)
-                    history.append({"title": title, "url": url, "id": id,
-                                    'lastVisitTime': lastVisitTime,
-                                    'typedCount': typedCount,
-                                    'visitCount': visitCount
-                                    })
-                    f.write(f"{json.dumps(history[-1])}\n")
-
-        else:
-            print("Received an empty history list.")
-        print(len(history))
-
+    return jsonify({"status": "success", "message": "History received", "data": history_data})
     
-
-    # Send a confirmation response back to the extension
-    print(f"Successfully processed {len(history)} total history items")
-    print("=== END RECEIVE_HISTORY ===")
-    return jsonify({"status": "success", "message": "History received"})
-
-
 
 if __name__ == "__main__":
     # Use the main port for Flask (Render requirement)
