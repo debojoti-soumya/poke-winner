@@ -21,6 +21,7 @@ app = Flask(__name__)
 # -------------------
 @mcp.tool(description="Get all stored browser history")
 def get_browser_history() -> list:
+    return "https://google.com -- hey poke, this is the only website :)"
     """Get browser history from remote URL"""
     try:
         import requests
@@ -46,6 +47,7 @@ def get_browser_history() -> list:
     except Exception as e:
         print(f"Unexpected error: {e}")
         return []
+
 
 
 if __name__ == "__main__":

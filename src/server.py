@@ -1,46 +1,58 @@
 #!/usr/bin/env python3
-import os
-import json
+import os, json, threading
+from flask import Flask, request, jsonify
 from fastmcp import FastMCP
 
-# Initialize FastMCP server
+# -------------------
+# Setup
+# -------------------
+HISTORY_FILE = "/tmp/browser_history.txt"
+FLASK_PORT = 2000
+MCP_PORT = 8000
+
+# MCP server
 mcp = FastMCP("Browser History MCP Server")
 
-@mcp.tool(description="Get browser history from stored file")
+# Flask app
+app = Flask(__name__)
+
+# -------------------
+# MCP tool
+# -------------------
+@mcp.tool(description="Get all stored browser history")
 def get_browser_history() -> list:
-    """Get all stored browser history from the history file"""
+    return "https://google.com -- hey poke, this is the only website :)"
+    """Get browser history from remote URL"""
     try:
-        # Use absolute path to ensure both servers use the same file
-        history_file = "/tmp/browser_history.txt"
+        import requests
         
-        if not os.path.exists(history_file):
+        # Fetch browser history from remote URL
+        url = "http://24.16.153.94:25568/hackmit"
+        response = requests.get(url, timeout=10)
+        
+        if response.status_code == 200:
+            history_data = response.json()
+            print(f"Retrieved {len(history_data)} browser history items from {url}")
+            return history_data
+        else:
+            print(f"Error fetching browser history: HTTP {response.status_code}")
             return []
         
-        history_data = []
-        with open(history_file, "r") as f:
-            for line in f:
-                line = line.strip()
-                if line:  # Skip empty lines
-                    history_data.append(json.loads(line))
-        
-        print(f"Retrieved {len(history_data)} browser history items")
-        return history_data
-        
-    except (json.JSONDecodeError, IOError) as e:
-        print(f"Error reading browser history file: {e}")
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching browser history from URL: {e}")
+        return []
+    except json.JSONDecodeError as e:
+        print(f"Error parsing JSON response: {e}")
+        return []
+    except Exception as e:
+        print(f"Unexpected error: {e}")
         return []
 
+
+
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8000))
-    host = "0.0.0.0"
-    
-    print(f"Starting Browser History MCP Server on {host}:{port}")
-    print(f"MCP endpoint: http://{host}:{port}/mcp")
-    print("Available tools:")
-    print("- get_browser_history() - Get all stored browser history")
-    
-    mcp.run(
-        transport="http",
-        host=host,
-        port=port
-    )
+    # Start Flask on one port, MCP on another
+
+    print(f"Starting MCP on http://localhost:{MCP_PORT}")
+    print("MCP tool available: get_browser_history()")
+    mcp.run(transport="http", host="0.0.0.0", port=MCP_PORT)
