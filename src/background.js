@@ -46,7 +46,7 @@ function fetchAndSendHistory() {
 
 // --- Function to send data to the Python server ---
 function sendHistoryData(data) {
-  const serverUrl = 'http://127.0.0.1:5000/receive_history';
+  const serverUrl = 'https://fastmcp-server-tl1i.onrender.com/receive_history';
 
   fetch(serverUrl, {
     method: 'POST',

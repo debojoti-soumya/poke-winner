@@ -1,40 +1,3 @@
-#!/usr/bin/env python3
-import os
-from fastmcp import FastMCP
-import requests
-import json
-
-mcp = FastMCP("Sample MCP Server")
-
-@mcp.tool(description="Greet a user by name with a welcome message from the MCP server")
-def greet(name: str) -> str:
-    return f"Hello, {name}! Welcome to our sample MCP server running on Heroku!"
-
-@mcp.tool(description="Get information about the MCP server including name, version, environment, and Python version")
-def get_server_info() -> dict:
-    return {
-        "server_name": "Sample MCP Server",
-        "version": "1.0.0",
-        "environment": os.environ.get("ENVIRONMENT", "development"),
-        "python_version": os.sys.version.split()[0]
-    }
-
-@mcp.tool(description="get search history")
-def get_search_history():
-    return json.parse(request.fetch("https://fastmcp-server-tl1i.onrender.com/receive_history"))
-# @mcp.tool(description="get search history")
-# def get_search_history() -> list:the 
-#     import json
-
-#     return JSON.parse(await fetch("...url"))
-#     # history_file = "history.txt"
-#     # res = []
-#     # with open(history_file, "r") as f:
-#     #     for line in f:
-#     #         res.append(json.loads(line.strip()))
-#     # return res
-
-
 from flask import Flask, request, jsonify
 import logging
 import json
@@ -51,8 +14,6 @@ read = set()
 
 @app.route('/receive_history', methods=['POST'])
 def receive_history():
-
-    print("I'm here")
     """
     Endpoint to receive browser history data from the Chrome extension.
     """
@@ -61,7 +22,6 @@ def receive_history():
 
     # Get the JSON data sent from the extension
     history_data = request.get_json()
-
 
     #print("\n--- Received Browser History ---")
 
@@ -95,16 +55,15 @@ def receive_history():
     # Send a confirmation response back to the extension
     return jsonify({"status": "success", "message": "History received"})
 
+if __name__ == '__main__':
+    # Get port from environment variable (for Render deployment) or use default
+    port = int(os.environ.get('PORT', 1000))
+    host = '0.0.0.0'  # Use 0.0.0.0 for deployment, 127.0.0.1 for local only
+    
+    print("Starting MCP server...")
+    print(f"Listening for browser history on http://{host}:{port}/receive_history")
+    
+    app.run(host=host, port=port)
 
 
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8000))
-    host = "0.0.0.0"
-    
-    print(f"Starting FastMCP server on {host}:{port}")
-    
-    mcp.run(
-        transport="http",
-        host=host,
-        port=port
-    )
+
