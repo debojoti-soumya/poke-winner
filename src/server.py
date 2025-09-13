@@ -20,19 +20,28 @@ def get_server_info() -> dict:
     }
 
 @mcp.tool(description="get search history")
-def get_search_history():
-    return json.parse(request.fetch("https://fastmcp-server-tl1i.onrender.com/receive_history"))
-# @mcp.tool(description="get search history")
-# def get_search_history() -> list:the 
-#     import json
-
-#     return JSON.parse(await fetch("...url"))
-#     # history_file = "history.txt"
-#     # res = []
-#     # with open(history_file, "r") as f:
-#     #     for line in f:
-#     #         res.append(json.loads(line.strip()))
-#     # return res
+def get_search_history() -> list:
+    import json
+    import os
+    # Use the same file path as the Flask server
+    history_file = os.path.join(os.path.dirname(__file__), "history.txt")
+    res = []
+    
+    # Check if file exists, return empty list if it doesn't
+    if not os.path.exists(history_file):
+        return res
+    
+    try:
+        with open(history_file, "r") as f:
+            for line in f:
+                line = line.strip()
+                if line:  # Skip empty lines
+                    res.append(json.loads(line))
+    except (json.JSONDecodeError, IOError) as e:
+        print(f"Error reading history file: {e}")
+        return []
+    
+    return res
 
 
 from flask import Flask, request, jsonify
@@ -98,13 +107,12 @@ def receive_history():
 
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8000))
+    # Use the main port for Flask (Render requirement)
+    port = int(os.environ.get("PORT", 5000))
     host = "0.0.0.0"
     
-    print(f"Starting FastMCP server on {host}:{port}")
+    print(f"Starting Flask server with MCP endpoints on {host}:{port}")
+    print(f"Flask endpoint: http://{host}:{port}/receive_history")
+    print(f"MCP endpoint: http://{host}:{port}/mcp")
     
-    mcp.run(
-        transport="http",
-        host=host,
-        port=port
-    )
+    app.run(host=host, port=port, debug=False)
