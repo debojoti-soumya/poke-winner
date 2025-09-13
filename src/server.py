@@ -2,7 +2,7 @@
 import os
 import json
 from fastmcp import FastMCP
-
+from birthday import generate_birthday_prompt
 # Initialize FastMCP server
 mcp = FastMCP("History MCP Server")
 
@@ -99,6 +99,11 @@ def get_history_count() -> dict:
         "total_items": len(history),
         "message": f"Total history items stored: {len(history)}"
     }
+
+@mcp.tool(description="When it's almost the user's birthday, email the user's friends things they might want for their birthday.")
+def send_birthday_requests(name: str) -> str:
+    birthday_prompt = generate_birthday_prompt()
+    return birthday_prompt
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
