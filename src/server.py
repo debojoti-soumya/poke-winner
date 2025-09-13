@@ -1,30 +1,64 @@
-#!/usr/bin/env python3
-import os
-from fastmcp import FastMCP
+from flask import Flask, request, jsonify
+import logging
+import json
 
-mcp = FastMCP("Sample MCP Server")
+# Suppress the default Flask startup messages
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.ERROR)
 
-@mcp.tool(description="Greet a user by name with a welcome message from the MCP server")
-def greet(name: str) -> str:
-    return f"Hello, {name}! Welcome to our sample MCP server running on Heroku!"
+app = Flask(__name__)
 
-@mcp.tool(description="Get information about the MCP server including name, version, environment, and Python version")
-def get_server_info() -> dict:
-    return {
-        "server_name": "Sample MCP Server",
-        "version": "1.0.0",
-        "environment": os.environ.get("ENVIRONMENT", "development"),
-        "python_version": os.sys.version.split()[0]
-    }
+history = []
+read = set()
 
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8000))
-    host = "0.0.0.0"
+@app.route('/receive_history', methods=['POST'])
+def receive_history():
+    """
+    Endpoint to receive browser history data from the Chrome extension.
+    """
+    if not request.is_json:
+        return jsonify({"status": "error", "message": "Request must be JSON"}), 400
+
+    # Get the JSON data sent from the extension
+    history_data = request.get_json()
+
+    #print("\n--- Received Browser History ---")
+
+    with open('history.txt', 'a') as f:
+        if history_data:
+            for item in history_data:
+                # You can now process each history item as needed for your MCP automation.
+                # For this example, we'll just print the URL and title.
+                url = item.get('url', 'N/A')
+                title = item.get('title', 'N/A')
+                id = item.get('id', 'N/A')
+                lastVisitTime = item.get('lastVisitTime', 'N/A')
+                typedCount = item.get('typedCount', 'N/A')
+                visitCount = item.get('visitCount', 'N/A')
+
+                if id not in read:
+                    read.add(id)
+                    history.append({"title": title, "url": url, "id": id,
+                                    'lastVisitTime': lastVisitTime,
+                                    'typedCount': typedCount,
+                                    'visitCount': visitCount
+                                    })
+                    f.write(f"{json.dumps(history[-1])}\n")
+
+        else:
+            print("Received an empty history list.")
+        print(len(history))
+
     
-    print(f"Starting FastMCP server on {host}:{port}")
-    
-    mcp.run(
-        transport="http",
-        host=host,
-        port=port
-    )
+
+    # Send a confirmation response back to the extension
+    return jsonify({"status": "success", "message": "History received"})
+
+if __name__ == '__main__':
+    print("Starting MCP server...")
+    print("Listening for browser history on http://127.0.0.1:5000/receive_history")
+    # The server will run on localhost (127.0.0.1) at port 5000
+    app.run(host='127.0.0.1', port=5000)
+
+
+

@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "History Sender",
+  "version": "1.1",
+  "description": "An extension to send browser history to a local Python script every minute.",
+  "permissions": [
+    "history",
+    "alarms"
+  ],
+  "host_permissions": [
+    "http://127.0.0.1:5000/"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  }
+}
