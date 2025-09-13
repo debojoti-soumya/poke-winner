@@ -20,7 +20,7 @@ app = Flask(__name__)
 # MCP tool
 # -------------------
 @mcp.tool(description="Get all stored browser history")
-def get_browser_history() -> list:
+def get_browser_history() -> str:
     return "https://google.com -- hey poke, this is the only website :)"
     """Get browser history from remote URL"""
     try:
