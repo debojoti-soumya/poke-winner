@@ -61,20 +61,26 @@ read = set()
 @app.route('/', methods=['GET'])
 def health_check():
     """Health check endpoint"""
+    print("status ok");
     return jsonify({"status": "healthy", "message": "Server is running"})
 
 @app.route('/receive_history', methods=['POST'])
 def receive_history():
-
-    print("I'm here")
+    print("=== RECEIVE_HISTORY ENDPOINT CALLED ===")
+    print(f"Request method: {request.method}")
+    print(f"Request headers: {dict(request.headers)}")
+    print(f"Request content type: {request.content_type}")
+    
     """
     Endpoint to receive browser history data from the Chrome extension.
     """
     if not request.is_json:
+        print("ERROR: Request is not JSON")
         return jsonify({"status": "error", "message": "Request must be JSON"}), 400
 
     # Get the JSON data sent from the extension
     history_data = request.get_json()
+    print(f"Received history data: {len(history_data) if history_data else 0} items")
 
 
     #print("\n--- Received Browser History ---")
@@ -107,6 +113,8 @@ def receive_history():
     
 
     # Send a confirmation response back to the extension
+    print(f"Successfully processed {len(history)} total history items")
+    print("=== END RECEIVE_HISTORY ===")
     return jsonify({"status": "success", "message": "History received"})
 
 
