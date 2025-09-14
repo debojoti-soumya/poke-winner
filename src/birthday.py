@@ -1,5 +1,10 @@
 import requests
 import json
+import os
+
+# Get API keys from environment variables
+CLAUDE_API_KEY = os.getenv('CLAUDE_API_KEY')
+POKE_API_KEY = os.getenv('POKE_API_KEY')
 
 def generate_birthday_prompt():
 
@@ -21,8 +26,8 @@ def generate_birthday_prompt():
 
     purchase_history = str(knot_response.json()['data'])
 
-    print("Status Code:", response.status_code)
-    print("Response Body:", response.text)
+    print("Status Code:", knot_response.status_code)
+    print("Response Body:", knot_response.text)
 
 
     CLAUDE_MESSAGE = '''given my search history: ''' + history + '''\n\n 
