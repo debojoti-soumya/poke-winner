@@ -26,7 +26,8 @@ def get_browser_history(user_email : str) -> list:
         import requests
         
         # Fetch browser history from remote URL
-        url = "http://24.16.153.94:25568/hackmit" + "?user" + user_email
+        url = "http://poke-winner-gimran.onrender.com/history"
+        # url = url + "?user" + user_email
         response = requests.get(url, timeout=10)
         
         if response.status_code == 200:
@@ -59,8 +60,8 @@ def get_bookmarks(user_email : str) -> list:
         import requests
 
         # Base URL can be overridden via env var to avoid hard-coding
-        base_url = os.environ.get("BOOKMARKS_API_URL", "http://24.16.153.94:25568/bookmarks")
-        url = f"{base_url}?user={user_email}"
+        base_url = os.environ.get("BOOKMARKS_API_URL", "http://poke-winner-gimran.onrender.com/bookmarks")
+        # url = f"{base_url}?user={user_email}"
 
         response = requests.get(url, timeout=10)
 

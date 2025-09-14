@@ -9,7 +9,7 @@
     "bookmarks"
   ],
   "host_permissions": [
-    "https://poke-winner.onrender.com/"
+    "https://poke-winner-gimran.onrender.com/"
   ],
   "background": {
     "service_worker": "background.js"

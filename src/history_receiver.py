@@ -11,7 +11,7 @@ import os
 app = Flask(__name__)
 
 # MCP server URL - this will be your deployed MCP server
-MCP_SERVER_URL = "https://poke-winner.onrender.com/mcp"
+MCP_SERVER_URL = "https://poke-winner-gimran.onrender.com/mcp"
 
 @app.route('/', methods=['GET'])
 def health_check():
