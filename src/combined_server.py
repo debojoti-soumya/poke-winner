@@ -57,7 +57,7 @@ def checkin():
     if current_time - history[0]["lastVisitTime"] < 900000:
         current_activity = history[0]["url"]
     if current_activity:
-        return f"User is/was recently browsing this website: {current_activity}. If it is productive, text them "Good job!" If it is not productive, text them to get back on task."
+        return f"User is/was recently browsing this website: {current_activity}. If it is productive, text them Good job! If it is not productive, text them to get back on task."
     else:
         return "User is probably not browsing the Internet right now. Ignore."
 
