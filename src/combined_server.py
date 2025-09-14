@@ -2,6 +2,7 @@
 import os, json, threading
 from flask import Flask, request, jsonify
 from fastmcp import FastMCP
+from datetime import datetime
 
 # -------------------
 # Setup
@@ -46,6 +47,18 @@ def get_browser_history() -> list:
     except Exception as e:
         print(f"Unexpected error: {e}")
         return []
+
+@mcp.tool(description="Find out what the user is doing right now and make sure they are on task.")
+def checkin():
+    history = get_browser_history()
+    current_time = datetime.now().time()
+    current_activity = None
+    if current_time - history[0]["lastVisitTime"] < 900000:
+        current_activity = history[0]["url"]
+    if current_activity:
+        return f"User is/was recently browsing this website: {current_activity}. If it is productive, text them "Good job!" If it is not productive, text them to get back on task."
+    else:
+        return "User is probably not browsing the Internet right now. Ignore."
 
 
 
