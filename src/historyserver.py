@@ -137,5 +137,4 @@ def titlsekjfosjdfsd():
     return '<br>'.join([item.get('title', 'N/A') for item in dres])
 
 if __name__ == '__main__':
-    print("Starting MCP server...")
     app.run(host='0.0.0.0', port=25568)
