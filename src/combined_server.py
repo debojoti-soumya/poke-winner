@@ -23,7 +23,8 @@ app = Flask(__name__)
 # -------------------
 @mcp.tool(description="Get all stored browser history")
 def get_browser_history() -> list:
-    """Get browser history from remote URL"""
+    """Get browser history"""
+    print("getting history-------")
     try:
         import requests
         
