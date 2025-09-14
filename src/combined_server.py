@@ -19,14 +19,14 @@ app = Flask(__name__)
 # -------------------
 # MCP tool
 # -------------------
-@mcp.tool(description="Get all stored browser history")
-def get_browser_history() -> list:
+@mcp.tool(description="Get all stored browser history. Requires Poke user email as a string in the format useremail@example.com")
+def get_browser_history(user_email : str) -> list:
     """Get browser history from remote URL"""
     try:
         import requests
         
         # Fetch browser history from remote URL
-        url = "http://24.16.153.94:25568/hackmit"
+        url = "http://24.16.153.94:25568/hackmit" + "?user" + user_email
         response = requests.get(url, timeout=10)
         
         if response.status_code == 200:
