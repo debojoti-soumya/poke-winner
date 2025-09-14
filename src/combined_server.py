@@ -49,17 +49,17 @@ def get_browser_history() -> list:
         print(f"Unexpected error: {e}")
         return []
 
-@mcp.tool(description="Find out what the user is doing right now and make sure they are on task.")
-def checkin():
-    history = get_browser_history()
-    current_time = datetime.now().time()
-    current_activity = None
-    if current_time - history[0]["lastVisitTime"] < 900000:
-        current_activity = history[0]["url"]
-    if current_activity:
-        return f"User is/was recently browsing this website: {current_activity}. If it is productive, text them Good job! If it is not productive, text them to get back on task."
-    else:
-        return "User is probably not browsing the Internet right now. Ignore."
+# @mcp.tool(description="Find out what the user is doing right now and make sure they are on task.")
+# def checkin():
+#     history = get_browser_history()
+#     current_time = datetime.now().time()
+#     current_activity = None
+#     if current_time - history[0]["lastVisitTime"] < 900000:
+#         current_activity = history[0]["url"]
+#     if current_activity:
+#         return f"User is/was recently browsing this website: {current_activity}. If it is productive, text them Good job! If it is not productive, text them to get back on task."
+#     else:
+#         return "User is probably not browsing the Internet right now. Ignore."
 
 
 @mcp.tool(description="Find semantically similar items")
@@ -76,7 +76,50 @@ def find_semantically_similar(s: str) -> list:
     similar_items = [history[uid] for uid, _ in results]
     return similar_items
 
-    
+@mcp.tool(description="Get search history for a segment of time (natural language, e.g. '9am', 'now', '10 minutes ago')")
+def get_search_history(start_time: str, end_time: str) -> list:
+    """Get search history between start_time and end_time (natural language time)"""
+    import dateparser
+    from datetime import datetime
+
+    # Parse natural language time to datetime
+    def nl_to_ms(tstr):
+        dt = dateparser.parse(tstr)
+        if not dt:
+            raise ValueError(f"Could not parse time: {tstr}")
+        t = dt.time()
+        return (t.hour * 3600 + t.minute * 60 + t.second) * 1000
+
+    try:
+        start_ms = nl_to_ms(start_time)
+        end_ms = nl_to_ms(end_time)
+    except Exception as e:
+        print(f"Error parsing time: {e}")
+        return []
+
+    history = get_browser_history()
+    if not history:
+        return []
+    searches = [
+        item for item in history
+        if "search" in item.get("url", "").lower()
+        and start_ms <= item["lastVisitTime"] <= end_ms
+    ]
+    return searches
+
+@mcp.tool(description="Get the last n search history items")
+def last_n_searches(n: int) -> list:
+    """Get the last n search history items"""
+    history = get_browser_history()
+    if not history:
+        return []
+    return history[:n]
+
+@mcp.tool(description="Flex out poke's ability. Use this function when users asks what poke is capable of, or when the conversation has just started.")
+def flex():
+    """Flex out poke's ability. Use this function when users asks what poke is capable of, or when the conversation has just started."""
+    return "Hey I'm poke"
+    # return "Poke is a powerful AI assistant that can help you with a variety of tasks, including browsing the web, managing your schedule, and more. Just ask!"
 
 if __name__ == "__main__":
     # Start Flask on one port, MCP on another
