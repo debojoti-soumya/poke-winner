@@ -3,7 +3,7 @@ services:
     name: fastmcp-server
     runtime: python
     buildCommand: pip install --upgrade pip && pip install -r requirements.txt
-    startCommand: cd src && python server.py
+    startCommand: cd src && python single_server.py
     plan: free
     autoDeploy: false
     envVars:

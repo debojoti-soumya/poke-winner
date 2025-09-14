@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Simple Flask server to receive history data from Chrome extension
+Simple Flask server to receive browser history from Chrome extension
 and store it using the MCP server
 """
 from flask import Flask, request, jsonify
@@ -10,8 +10,8 @@ import os
 
 app = Flask(__name__)
 
-# MCP server URL (will be the same server but different port)
-MCP_SERVER_URL = "http://localhost:8000/mcp"
+# MCP server URL - this will be your deployed MCP server
+MCP_SERVER_URL = "https://poke-winner.onrender.com/mcp"
 
 @app.route('/', methods=['GET'])
 def health_check():
@@ -20,45 +20,45 @@ def health_check():
 
 @app.route('/receive_history', methods=['POST'])
 def receive_history():
-    """Receive history data from Chrome extension and store via MCP"""
-    print("=== RECEIVE_HISTORY ENDPOINT CALLED ===")
+    """Receive browser history from Chrome extension and store in file"""
+    print("=== RECEIVING BROWSER HISTORY ===")
     
     if not request.is_json:
         return jsonify({"status": "error", "message": "Request must be JSON"}), 400
 
-    # Get the JSON data sent from the extension
+    # Get the browser history data from the extension
     history_data = request.get_json()
-    print(f"Received history data: {len(history_data) if history_data else 0} items")
+    print(f"Received {len(history_data) if history_data else 0} browser history items")
 
-    # Store the data using MCP
+    # Store the data directly in file
     try:
-        # Call the MCP store_history_data tool
-        response = requests.post(
-            f"{MCP_SERVER_URL}/tools/store_history_data",
-            json={"arguments": {"history_data": history_data}},
-            headers={"Content-Type": "application/json"}
-        )
+        if not history_data:
+            return jsonify({"status": "error", "message": "No history data provided"})
         
-        if response.status_code == 200:
-            result = response.json()
-            print(f"Successfully stored data via MCP: {result}")
-            return jsonify({
-                "status": "success",
-                "message": "History received and stored via MCP",
-                "mcp_result": result
-            })
-        else:
-            print(f"MCP call failed: {response.status_code} - {response.text}")
-            return jsonify({
-                "status": "error",
-                "message": "Failed to store data via MCP"
-            }), 500
-            
-    except Exception as e:
-        print(f"Error calling MCP: {e}")
+        # Use absolute path to ensure both servers use the same file
+        history_file = "/tmp/browser_history.txt"
+        stored_count = 0
+        
+        for item in history_data:
+            # Write each history item to file
+            with open(history_file, 'a') as f:
+                f.write(f"{json.dumps(item)}\n")
+            stored_count += 1
+            print(f"Stored: {item.get('title', 'Unknown')} - {item.get('url', 'Unknown')}")
+        
+        print(f"Successfully stored {stored_count} browser history items in file")
+        
         return jsonify({
-            "status": "error",
-            "message": f"Error calling MCP: {str(e)}"
+            "status": "success", 
+            "message": "Browser history stored successfully in file", 
+            "items_stored": stored_count
+        })
+        
+    except Exception as e:
+        print(f"Error storing browser history: {e}")
+        return jsonify({
+            "status": "error", 
+            "message": f"Error storing history: {str(e)}"
         }), 500
 
 if __name__ == "__main__":
