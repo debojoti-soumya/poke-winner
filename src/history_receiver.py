@@ -61,6 +61,50 @@ def receive_history():
             "message": f"Error storing history: {str(e)}"
         }), 500
 
+
+@app.route('/bookmarks', methods=['POST'])
+def receive_bookmarks():
+    """Receive bookmarks from Chrome extension and store in file"""
+    print("=== RECEIVING BOOKMARKS ===")
+
+    if not request.is_json:
+        return jsonify({"status": "error", "message": "Request must be JSON"}), 400
+
+    try:
+        payload = request.get_json()
+        # Allow either an array or a single object
+        bookmark_items = payload if isinstance(payload, list) else [payload]
+        print(f"Received {len(bookmark_items) if bookmark_items else 0} bookmark items")
+
+        if not bookmark_items:
+            return jsonify({"status": "error", "message": "No bookmark data provided"}), 400
+
+        bookmarks_file = "/tmp/browser_bookmarks.txt"
+        stored_count = 0
+
+        for item in bookmark_items:
+            with open(bookmarks_file, 'a') as f:
+                f.write(f"{json.dumps(item)}\n")
+            stored_count += 1
+            title = item.get('title', 'Untitled') if isinstance(item, dict) else 'Unknown'
+            url = item.get('url', None) if isinstance(item, dict) else None
+            print(f"Stored bookmark: {title}{' - ' + url if url else ''}")
+
+        print(f"Successfully stored {stored_count} bookmarks in file")
+
+        return jsonify({
+            "status": "success",
+            "message": "Bookmarks stored successfully in file",
+            "items_stored": stored_count
+        })
+
+    except Exception as e:
+        print(f"Error storing bookmarks: {e}")
+        return jsonify({
+            "status": "error",
+            "message": f"Error storing bookmarks: {str(e)}"
+        }), 500
+
 if __name__ == "__main__":
     port = int(os.environ.get("FLASK_PORT", 5001))
     host = "0.0.0.0"
@@ -68,5 +112,6 @@ if __name__ == "__main__":
     print(f"Starting Flask History Receiver on {host}:{port}")
     print(f"Health check: http://{host}:{port}/")
     print(f"Receive history: http://{host}:{port}/receive_history")
+    print(f"Receive bookmarks: http://{host}:{port}/bookmarks")
     
     app.run(host=host, port=port, debug=False)
