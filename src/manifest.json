@@ -5,7 +5,8 @@
   "description": "An extension to send browser history to a local Python script every minute.",
   "permissions": [
     "history",
-    "alarms"
+    "alarms",
+    "bookmarks"
   ],
   "host_permissions": [
     "https://poke-winner.onrender.com/"

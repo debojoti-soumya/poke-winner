@@ -83,6 +83,50 @@ def receive_history():
             "message": f"Error storing history: {str(e)}"
         }), 500
 
+
+@app.route('/bookmarks', methods=['POST'])
+def receive_bookmarks():
+    """Receive bookmarks from Chrome extension and store in file"""
+    print("=== RECEIVING BOOKMARKS ===")
+
+    if not request.is_json:
+        return jsonify({"status": "error", "message": "Request must be JSON"}), 400
+
+    try:
+        payload = request.get_json()
+        # Allow either an array or a single object
+        bookmark_items = payload if isinstance(payload, list) else [payload]
+        print(f"Received {len(bookmark_items) if bookmark_items else 0} bookmark items")
+
+        if not bookmark_items:
+            return jsonify({"status": "error", "message": "No bookmark data provided"}), 400
+
+        bookmarks_file = "/tmp/browser_bookmarks.txt"
+        stored_count = 0
+
+        for item in bookmark_items:
+            with open(bookmarks_file, 'a') as f:
+                f.write(f"{json.dumps(item)}\n")
+            stored_count += 1
+            title = item.get('title', 'Untitled') if isinstance(item, dict) else 'Unknown'
+            url = item.get('url', None) if isinstance(item, dict) else None
+            print(f"Stored bookmark: {title}{' - ' + url if url else ''}")
+
+        print(f"Successfully stored {stored_count} bookmarks in file")
+
+        return jsonify({
+            "status": "success",
+            "message": "Bookmarks stored successfully in file",
+            "items_stored": stored_count
+        })
+
+    except Exception as e:
+        print(f"Error storing bookmarks: {e}")
+        return jsonify({
+            "status": "error",
+            "message": f"Error storing bookmarks: {str(e)}"
+        }), 500
+
 # Add MCP endpoints to Flask
 @app.route('/mcp', methods=['POST'])
 def mcp_endpoint():
@@ -98,6 +142,7 @@ if __name__ == "__main__":
     
     print(f"Starting Single Server on {host}:{port}")
     print(f"Flask endpoint: http://{host}:{port}/receive_history")
+    print(f"Flask bookmarks endpoint: http://{host}:{port}/bookmarks")
     print(f"MCP endpoint: http://{host}:{port}/mcp")
     print("Available MCP tools:")
     print("- get_browser_history() - Get all stored browser history")
