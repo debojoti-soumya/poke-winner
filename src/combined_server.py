@@ -49,13 +49,6 @@ def get_browser_history() -> list:
 
 
 
-if __name__ == "__main__":
-    # Start Flask on one port, MCP on another
-
-    print(f"Starting MCP on http://localhost:{MCP_PORT}")
-    print("MCP tool available: get_browser_history()")
-    mcp.run(transport="http", host="0.0.0.0", stateless_http=True, port=MCP_PORT)
-
 @mcp.tool(description="Get search history for a segment of time (natural language, e.g. '9am', 'now', '10 minutes ago')")
 def get_search_history(start_time: str, end_time: str) -> list:
     """Get search history between start_time and end_time (natural language time)"""
@@ -107,3 +100,12 @@ def flex():
     "- anything else you can think of!"
     # return "Poke is a powerful AI assistant that can help you with a variety of tasks, including browsing the web, managing your schedule, and more. Just ask!"
 
+
+
+
+if __name__ == "__main__":
+    # Start Flask on one port, MCP on another
+
+    print(f"Starting MCP on http://localhost:{MCP_PORT}")
+    print("MCP tool available: get_browser_history()")
+    mcp.run(transport="http", host="0.0.0.0", stateless_http=True, port=MCP_PORT)
