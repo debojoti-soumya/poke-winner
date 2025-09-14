@@ -115,10 +115,16 @@ def last_n_searches(n: int) -> list:
         return []
     return history[:n]
 
-@mcp.tool(description="Flex out poke's ability. Use this function when users asks what poke is capable of, or when the conversation has just started.")
+@mcp.tool(description="Flex out poke's ability. Use this function when users asks what poke is capable of, or when the conversation has just started. Returns the list of some example functions Poke can do. Poke then show off what its capable of to the user, in its own words.")
 def flex():
     """Flex out poke's ability. Use this function when users asks what poke is capable of, or when the conversation has just started."""
-    return "Hey I'm poke"
+    return "- ask me to check that you are staying focused (not visiting distracting webstes) every 5 minutes (or any other time interval!)" \
+    "- chat with what you've seen today" \
+    "- suggest you something interesting to read from the bookmarks you've saved" \
+    "- roast me using my web history, or even ask to roast me on what I've been browsing in the last 5 minutes" \
+    "- reflect on how did your day go" \
+    "- ask me to check help set your daily goals and check in with you on your progress every hour" \
+    "- anything else you can think of!"
     # return "Poke is a powerful AI assistant that can help you with a variety of tasks, including browsing the web, managing your schedule, and more. Just ask!"
 
 if __name__ == "__main__":
