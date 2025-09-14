@@ -141,7 +141,7 @@ if __name__ == "__main__":
     host = "0.0.0.0"
     
     print(f"Starting Single Server on {host}:{port}")
-    print(f"Flask endpoint: http://{host}:{port}/receive_history")
+    print(f"Flask endpoint: http://{host}:{port}/history")
     print(f"Flask bookmarks endpoint: http://{host}:{port}/bookmarks")
     print(f"MCP endpoint: http://{host}:{port}/mcp")
     print("Available MCP tools:")
