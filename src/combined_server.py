@@ -2,8 +2,6 @@
 import os, json, threading
 from flask import Flask, request, jsonify
 from fastmcp import FastMCP
-from datetime import datetime
-from txtai import Embeddings
 
 # -------------------
 # Setup
@@ -21,15 +19,14 @@ app = Flask(__name__)
 # -------------------
 # MCP tool
 # -------------------
-@mcp.tool(description="Get all stored browser history. Receives user email as input to fetch personalized history in the format address@example.com")
-def get_browser_history(user_email : str) -> list:
-    """Get browser history"""
-    print("getting history-------")
+@mcp.tool(description="Get all stored browser history")
+def get_browser_history() -> list:
+    """Get browser history from remote URL"""
     try:
         import requests
         
         # Fetch browser history from remote URL
-        url = f"http://24.16.153.94:25568/hackmit?user={user_email}"
+        url = "http://24.16.153.94:25568/hackmit?user=jianwenma1028@gmail.com"
         response = requests.get(url, timeout=10)
         
         if response.status_code == 200:
@@ -50,32 +47,14 @@ def get_browser_history(user_email : str) -> list:
         print(f"Unexpected error: {e}")
         return []
 
-# @mcp.tool(description="Find out what the user is doing right now and make sure they are on task.")
-# def checkin():
-#     history = get_browser_history()
-#     current_time = datetime.now().time()
-#     current_activity = None
-#     if current_time - history[0]["lastVisitTime"] < 900000:
-#         current_activity = history[0]["url"]
-#     if current_activity:
-#         return f"User is/was recently browsing this website: {current_activity}. If it is productive, text them Good job! If it is not productive, text them to get back on task."
-#     else:
-#         return "User is probably not browsing the Internet right now. Ignore."
 
 
-@mcp.tool(description="Find semantically similar items")
-def find_semantically_similar(s: str) -> list:
-    """Find semantically similar items in browser history"""
-    history = get_browser_history()
-    if not history:
-        return []
-    texts = [item.get("title", "") + " " + item.get("url", "") for item in history]
+if __name__ == "__main__":
+    # Start Flask on one port, MCP on another
 
-    embeddings = Embeddings({"method": "transformers", "path": "sentence-transformers/all-MiniLM-L6-v2"})
-    embeddings.index((uid, text, None) for uid, text in enumerate(texts))
-    results = embeddings.search(s, 5)
-    similar_items = [history[uid] for uid, _ in results]
-    return similar_items
+    print(f"Starting MCP on http://localhost:{MCP_PORT}")
+    print("MCP tool available: get_browser_history()")
+    mcp.run(transport="http", host="0.0.0.0", stateless_http=True, port=MCP_PORT)
 
 @mcp.tool(description="Get search history for a segment of time (natural language, e.g. '9am', 'now', '10 minutes ago')")
 def get_search_history(start_time: str, end_time: str) -> list:
@@ -128,9 +107,3 @@ def flex():
     "- anything else you can think of!"
     # return "Poke is a powerful AI assistant that can help you with a variety of tasks, including browsing the web, managing your schedule, and more. Just ask!"
 
-if __name__ == "__main__":
-    # Start Flask on one port, MCP on another
-
-    print(f"Starting MCP on http://localhost:{MCP_PORT}")
-    print("MCP tool available: get_browser_history()")
-    mcp.run(transport="http", host="0.0.0.0", stateless_http=True, port=MCP_PORT)
