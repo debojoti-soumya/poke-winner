@@ -3,6 +3,7 @@ import os, json, threading
 from flask import Flask, request, jsonify
 from fastmcp import FastMCP
 from datetime import datetime
+from txtai import Embeddings
 
 # -------------------
 # Setup
@@ -61,6 +62,21 @@ def checkin():
         return "User is probably not browsing the Internet right now. Ignore."
 
 
+@mcp.tool(description="Find semantically similar items")
+def find_semantically_similar(s: str) -> list:
+    """Find semantically similar items in browser history"""
+    history = get_browser_history()
+    if not history:
+        return []
+    texts = [item.get("title", "") + " " + item.get("url", "") for item in history]
+
+    embeddings = Embeddings({"method": "transformers", "path": "sentence-transformers/all-MiniLM-L6-v2"})
+    embeddings.index((uid, text, None) for uid, text in enumerate(texts))
+    results = embeddings.search(s, 5)
+    similar_items = [history[uid] for uid, _ in results]
+    return similar_items
+
+    
 
 if __name__ == "__main__":
     # Start Flask on one port, MCP on another
