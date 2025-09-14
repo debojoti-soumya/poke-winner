@@ -2,26 +2,22 @@ import requests
 import json
 
 def generate_birthday_prompt():
-    POKE_API_KEY = 'pk_uWXjFJQegHyVq5mZuS7ljem1xJDJfZMk2OwbiiVeTMQ'
-    CLAUDE_API_KEY = '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'
-
 
     with open("history.txt", "r", encoding="utf-8") as f:
         history = f.read()
 
 
-    url_knot = "https://development.knotapi.com/transactions/sync"
-    headers_knot = {
-        "Authorization": "Basic ZGRhMDc3OGQtOTQ4Ni00N2Y4LWJkODAtNmYyNTEyZjliY2RiOjg4NGQ4NGU4NTUwNTRjMzJhOGUzOWQwOGZjZDk4NDVk",  # replace with your real encoded value
-        "Content-Type": "application/json"
+    url = "https://knot.tunnel.tel/transactions/sync"
+    headers = {
+    "Content-Type": "application/json"
     }
-    data_knot = {
+    data = {
         "merchant_id": 44,
         "external_user_id": "abc",
-        "cursor": "eyJpZCI6MjI3ODEsIl9wb2ludHNUb05leHRJdGVtcyI6dHJ1ZX0",
         "limit": 5
     }
-    knot_response = requests.post(url_knot, headers=headers_knot, data=json.dumps(data_knot))
+
+    knot_response = requests.post(url, headers=headers, json=data)
 
     purchase_history = str(knot_response.json()['data'])
 
