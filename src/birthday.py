@@ -26,7 +26,6 @@ def generate_birthday_prompt():
 
     purchase_history = str(knot_response.json()['data'])
 
-    print("Status Code:", knot_response.status_code)
     print("Response Body:", knot_response.text)
 
 
