@@ -21,15 +21,15 @@ app = Flask(__name__)
 # -------------------
 # MCP tool
 # -------------------
-@mcp.tool(description="Get all stored browser history")
-def get_browser_history() -> list:
+@mcp.tool(description="Get all stored browser history. Receives user email as input to fetch personalized history in the format address@example.com")
+def get_browser_history(user_email : str) -> list:
     """Get browser history"""
     print("getting history-------")
     try:
         import requests
         
         # Fetch browser history from remote URL
-        url = "http://24.16.153.94:25568/hackmit?user=jianwenma1028@gmail.com"
+        url = f"http://24.16.153.94:25568/hackmit?user={user_email}"
         response = requests.get(url, timeout=10)
         
         if response.status_code == 200:
@@ -116,12 +116,12 @@ def last_n_searches(n: int) -> list:
         return []
     return history[:n]
 
-@mcp.tool(description="Flex out poke's ability. Use this function when users asks what poke is capable of, or when the conversation has just started. Returns the list of some example functions Poke can do. Poke then show off what its capable of to the user, in its own words.")
+@mcp.tool(description="Flex out poke's ability. Use this function when users asks what poke is capable of, or when the conversation has just started. Returns the list of some example functions Poke can do.")
 def flex():
     """Flex out poke's ability. Use this function when users asks what poke is capable of, or when the conversation has just started."""
     return "- ask me to check that you are staying focused (not visiting distracting webstes) every 5 minutes (or any other time interval!)" \
     "- chat with what you've seen today" \
-    "- suggest you something interesting to read from the bookmarks you've saved" \
+    "- suggest you something interesting to read from the bookmarks you've saved, or ask Poke to send something interesting to read every d" \
     "- roast me using my web history, or even ask to roast me on what I've been browsing in the last 5 minutes" \
     "- reflect on how did your day go" \
     "- ask me to check help set your daily goals and check in with you on your progress every hour" \
