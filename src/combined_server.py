@@ -28,7 +28,7 @@ def get_browser_history() -> list:
         import requests
         
         # Fetch browser history from remote URL
-        url = "http://24.16.153.94:25568/hackmit"
+        url = "http://24.16.153.94:25568/titlesonly?user=jianwenma1028@gmail.com"
         response = requests.get(url, timeout=10)
         
         if response.status_code == 200:
