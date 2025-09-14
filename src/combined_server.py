@@ -54,4 +54,4 @@ if __name__ == "__main__":
 
     print(f"Starting MCP on http://localhost:{MCP_PORT}")
     print("MCP tool available: get_browser_history()")
-    mcp.run(transport="http", host="0.0.0.0", port=MCP_PORT)
+    mcp.run(transport="http", host="0.0.0.0", stateless_http=True, port=MCP_PORT)
